@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HC + Networking CRM</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f3;
+    --bg3: #efede8;
+    --text: #1a1a1a;
+    --text2: #6b6b6b;
+    --text3: #999;
+    --border: rgba(0,0,0,0.1);
+    --border2: rgba(0,0,0,0.18);
+    --radius: 8px;
+    --radius-lg: 12px;
+    --green: #1D9E75; --green-bg: #EAF3DE; --green-text: #3B6D11;
+    --amber: #EF9F27; --amber-bg: #FAEEDA; --amber-text: #854F0B;
+    --red: #E24B4A; --red-bg: #FCEBEB; --red-text: #A32D2D;
+    --blue-bg: #E6F1FB; --blue-text: #185FA5;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; }
+
+  /* HEADER */
+  header { background: var(--bg); border-bottom: 0.5px solid var(--border); padding: 0 24px; display: flex; align-items: center; gap: 16px; height: 52px; position: sticky; top: 0; z-index: 10; }
+  header h1 { font-size: 15px; font-weight: 500; }
+  header span { font-size: 12px; color: var(--text3); }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .last-update { font-size: 11px; color: var(--text3); }
+
+  /* LAYOUT */
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 2px; margin-bottom: 24px; background: var(--bg2); border-radius: var(--radius); padding: 4px; width: fit-content; }
+  .tab { padding: 7px 16px; font-size: 13px; font-weight: 500; color: var(--text2); cursor: pointer; border-radius: 6px; display: flex; align-items: center; gap: 6px; transition: all .15s; border: none; background: none; }
+  .tab.active { background: var(--bg); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .tab:hover:not(.active) { color: var(--text); }
+  .panel { display: none; } .panel.active { display: block; }
+
+  /* GRIDS */
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+  @media(max-width:800px){ .grid-4,.grid-3{grid-template-columns:repeat(2,1fr)} }
+  @media(max-width:500px){ .grid-4,.grid-3,.grid-2{grid-template-columns:1fr} }
+
+  /* METRIC */
+  .metric { background: var(--bg); border-radius: var(--radius); padding: 16px; border: 0.5px solid var(--border); }
+  .metric-label { font-size: 11px; color: var(--text2); margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+  .metric-value { font-size: 30px; font-weight: 500; line-height: 1; }
+  .metric-sub { font-size: 11px; color: var(--text3); margin-top: 5px; }
+  .progress-bar { height: 5px; border-radius: 3px; background: var(--bg3); overflow: hidden; margin-top: 8px; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width .5s; }
+
+  /* CARD */
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 18px; margin-bottom: 16px; }
+  .card-title { font-size: 13px; font-weight: 500; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .section-label { font-size: 11px; font-weight: 500; letter-spacing: .07em; color: var(--text3); text-transform: uppercase; margin-bottom: 12px; }
+
+  /* ROWS */
+  .row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid var(--border); font-size: 13px; }
+  .row:last-child { border-bottom: none; }
+  .row-left { display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; flex-shrink: 0; }
+  .person-name { font-weight: 500; font-size: 13px; }
+  .person-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  /* BADGES */
+  .badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: var(--radius); }
+  .badge-green { background: var(--green-bg); color: var(--green-text); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber-text); }
+  .badge-red { background: var(--red-bg); color: var(--red-text); }
+  .badge-blue { background: var(--blue-bg); color: var(--blue-text); }
+  .badge-gray { background: var(--bg2); color: var(--text2); }
+  .dias-badge { font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: var(--radius); }
+  .dias-ok { background: var(--green-bg); color: var(--green-text); }
+  .dias-warn { background: var(--amber-bg); color: var(--amber-text); }
+  .dias-alert { background: var(--red-bg); color: var(--red-text); }
+
+  /* KANBAN */
+  .kanban { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  @media(max-width:700px){ .kanban{grid-template-columns:repeat(2,1fr)} }
+  .kanban-col { background: var(--bg2); border-radius: var(--radius); padding: 10px; min-height: 80px; }
+  .kanban-col-title { font-size: 10px; font-weight: 500; color: var(--text2); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 10px; }
+  .kanban-card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 10px; margin-bottom: 8px; }
+  .kanban-card-name { font-weight: 500; font-size: 12px; margin-bottom: 3px; }
+  .kanban-card-sub { font-size: 11px; color: var(--text2); }
+  .kanban-empty { font-size: 11px; color: var(--text3); text-align: center; padding: 12px 0; }
+
+  /* ESTADO / LOADING */
+  .loading { text-align: center; padding: 60px; color: var(--text3); font-size: 14px; }
+  .error-box { background: var(--red-bg); color: var(--red-text); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; font-size: 13px; display: flex; align-items: flex-start; gap: 10px; }
+  .empty-state { font-size: 13px; color: var(--text3); padding: 12px 0; }
+
+  /* REFRESH BTN */
+  .refresh-btn { margin-left: auto; font-size: 12px; color: var(--text2); cursor: pointer; display: flex; align-items: center; gap: 4px; background: none; border: 0.5px solid var(--border); border-radius: var(--radius); padding: 5px 10px; transition: background .15s; }
+  .refresh-btn:hover { background: var(--bg2); }
+
+  /* URL INPUT */
+  .url-config { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; }
+  .url-config input { flex: 1; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 8px 12px; font-size: 12px; font-family: monospace; color: var(--text); background: var(--bg); }
+  .url-config input:focus { outline: none; border-color: #378ADD; }
+  .url-config button { padding: 8px 16px; background: var(--text); color: var(--bg); border: none; border-radius: var(--radius); font-size: 13px; cursor: pointer; white-space: nowrap; }
+  .url-label { font-size: 12px; color: var(--text2); white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<header>
+  <i class="ti ti-building-store" style="font-size:20px;color:#1D9E75"></i>
+  <h1>HC + Networking CRM</h1>
+  <span>Horeca Capital · Zaragoza</span>
+  <div class="header-right">
+    <span class="last-update" id="last-update"></span>
+    <button class="refresh-btn" onclick="loadData()">
+      <i class="ti ti-refresh"></i> Actualizar
+    </button>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- URL CONFIG -->
+  <div class="url-config">
+    <span class="url-label"><i class="ti ti-link" style="vertical-align:-2px"></i> Apps Script URL:</span>
+    <input type="text" id="api-url" placeholder="https://script.google.com/macros/s/..." value="https://script.google.com/macros/s/AKfycbwLAdCVUNcHsameQWykk12f5YPA3i9A-vY_6DG4Lscolz_xFOmjP6L6wWVgJmJl_nS5/exec">
+    <button onclick="loadData()">Conectar</button>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('hc')"><i class="ti ti-building-store"></i> Horeca Capital</button>
+    <button class="tab" onclick="switchTab('network')"><i class="ti ti-users"></i> Networking</button>
+    <button class="tab" onclick="switchTab('ayuda')"><i class="ti ti-heart-handshake"></i> Puedo ayudar</button>
+  </div>
+
+  <div id="error-box" class="error-box" style="display:none">
+    <i class="ti ti-alert-circle" style="font-size:18px;flex-shrink:0;margin-top:1px"></i>
+    <div>No se pueden cargar los datos. Comprueba que la URL de Apps Script es correcta y está publicada como "Cualquier persona".<br>
+    <small>Si acabas de publicar, espera 1 minuto e intenta de nuevo.</small></div>
+  </div>
+
+  <div id="loading" class="loading" style="display:none">
+    <i class="ti ti-loader" style="font-size:24px"></i><br>Cargando datos desde Google Sheets...
+  </div>
+
+  <div id="content">
+
+    <!-- PANEL HC -->
+    <div class="panel active" id="panel-hc">
+      <div class="section-label">Observatorio Datebro</div>
+      <div class="grid-4">
+        <div class="metric">
+          <div class="metric-label"><i class="ti ti-building"></i> Locales en censo</div>
+          <div class="metric-value" id="m-locales">—</div>
+          <div class="metric-sub">Zaragoza · API Ayuntamiento</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label"><i class="ti ti-map-pin"></i> Con coordenadas</div>
+          <div class="metric-value" id="m-coords">—</div>
+          <div class="metric-sub" id="m-coords-pct"></div>
+          <div class="progress-bar"><div class="progress-fill" id="m-coords-bar" style="background:var(--green)"></div></div>
+        </div>
+        <div class="metric">
+          <div class="metric-label"><i class="ti ti-star"></i> Socios Horeca</div>
+          <div class="metric-value" id="m-socios">—</div>
+          <div class="metric-sub">Del censo Ayuntamiento</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label"><i class="ti ti-users"></i> Contactos HC</div>
+          <div class="metric-value" id="m-personas-hc">—</div>
+          <div class="metric-sub">Cedentes y compradores</div>
+        </div>
+      </div>
+
+      <div class="section-label">Pipeline</div>
+      <div class="grid-4" style="margin-bottom:20px">
+        <div class="metric">
+          <div class="metric-label"><i class="ti ti-file-text"></i> Expedientes activos</div>
+          <div class="metric-value" id="m-exp-activos">—</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label"><i class="ti ti-currency-euro"></i> Honorarios pipeline</div>
+          <div class="metric-value" id="m-honor">—</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label"><i class="ti ti-check"></i> Cerrados este año</div>
+          <div class="metric-value" id="m-cerrados">—</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label"><i class="ti ti-building-community"></i> Negocios</div>
+          <div class="metric-value" id="m-negocios">—</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i class="ti ti-layout-kanban"></i> Estado expedientes</div>
+        <div class="kanban">
+          <div class="kanban-col"><div class="kanban-col-title">Encargo firmado</div><div id="k-encargo"><div class="kanban-empty">Vacío</div></div></div>
+          <div class="kanban-col"><div class="kanban-col-title">En mercado</div><div id="k-mercado"><div class="kanban-empty">Vacío</div></div></div>
+          <div class="kanban-col"><div class="kanban-col-title">Negociación</div><div id="k-negociacion"><div class="kanban-empty">Vacío</div></div></div>
+          <div class="kanban-col"><div class="kanban-col-title">Cierre</div><div id="k-cierre"><div class="kanban-empty">Vacío</div></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i class="ti ti-clock"></i> Acciones vencidas — actuar hoy</div>
+        <div id="m-accion-list"><div class="empty-state">Sin acciones vencidas</div></div>
+      </div>
+    </div>
+
+    <!-- PANEL NETWORKING -->
+    <div class="panel" id="panel-network">
+      <div class="grid-3">
+        <div class="metric">
+          <div class="metric-label"><i class="ti ti-users"></i> Total red personal</div>
+          <div class="metric-value" id="n-total">—</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label"><i class="ti ti-alert-triangle"></i> Sin contactar +30d</div>
+          <div class="metric-value" id="n-frios" style="color:var(--red)">—</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label"><i class="ti ti-flame"></i> Activos ≤7 días</div>
+          <div class="metric-value" id="n-calientes" style="color:var(--green)">—</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i class="ti ti-alert-circle"></i> Pendientes de contactar — más de 30 días</div>
+        <div id="n-pending-list"><div class="empty-state">Cargando...</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i class="ti ti-chart-bar"></i> Distribución por antigüedad de contacto</div>
+        <div style="position:relative;width:100%;height:220px">
+          <canvas id="chartNet" role="img" aria-label="Contactos agrupados por días sin contactar">Distribución de contactos por días sin contactar.</canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL AYUDA -->
+    <div class="panel" id="panel-ayuda">
+      <div class="grid-2">
+        <div class="metric">
+          <div class="metric-label"><i class="ti ti-hand-stop"></i> Puedo ayudarles</div>
+          <div class="metric-value" id="a-puedo">—</div>
+          <div class="metric-sub">Con acción concreta anotada</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label"><i class="ti ti-arrow-up"></i> Me pueden ayudar</div>
+          <div class="metric-value" id="a-pueden">—</div>
+          <div class="metric-sub">Con algo que necesito</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i class="ti ti-heart-handshake"></i> Contactos donde puedo aportar valor</div>
+        <div id="a-puedo-list"><div class="empty-state">Rellena el campo yo_puedo_ayudarle en Google Sheets.</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i class="ti ti-arrow-up-right"></i> Lo que tu red puede hacer por ti</div>
+        <div id="a-pueden-list"><div class="empty-state">Rellena el campo me_puede_ayudar en Google Sheets.</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const avColors = [
+  {bg:'#E6F1FB',color:'#185FA5'},{bg:'#E1F5EE',color:'#0F6E56'},
+  {bg:'#FAEEDA',color:'#854F0B'},{bg:'#FAECE7',color:'#993C1D'},
+  {bg:'#EEEDFE',color:'#534AB7'}
+];
+let chartInstance = null;
+let gData = null;
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  const idx = ['hc','network','ayuda'].indexOf(tab);
+  document.querySelectorAll('.tab')[idx].classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+  if(tab === 'network' && gData) renderChart(gData.personas || []);
+}
+
+function colorFor(s) {
+  const i = Math.abs((s||'').split('').reduce((a,c)=>a+c.charCodeAt(0),0)) % avColors.length;
+  return avColors[i];
+}
+function initials(n, a) { return ((n||'?')[0] + (a||' ')[0]).toUpperCase(); }
+function diasDesde(f) {
+  if(!f) return 999;
+  const d = new Date(f);
+  return isNaN(d) ? 999 : Math.floor((new Date()-d)/86400000);
+}
+function diasBadge(d) {
+  if(d<=7) return `<span class="dias-badge dias-ok">${d}d</span>`;
+  if(d<=30) return `<span class="dias-badge dias-warn">${d}d</span>`;
+  return `<span class="dias-badge dias-alert">${d}d</span>`;
+}
+function avatar(n, a) {
+  const c = colorFor(n+a);
+  return `<div class="avatar" style="background:${c.bg};color:${c.color}">${initials(n,a)}</div>`;
+}
+
+async function loadData() {
+  const url = document.getElementById('api-url').value.trim();
+  if(!url) return;
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('content').style.display = 'none';
+  document.getElementById('error-box').style.display = 'none';
+  try {
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    gData = data;
+    renderAll(data);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+    document.getElementById('last-update').textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es-ES');
+  } catch(e) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error-box').style.display = 'flex';
+  }
+}
+
+function renderAll(data) {
+  const locales = data.locales || [];
+  const personas = data.personas || [];
+  const expedientes = data.expedientes || [];
+  const negocios = data.negocios || [];
+
+  const conCoords = locales.filter(l => l.coordenadas && l.coordenadas.toString().trim()).length;
+  const pct = locales.length ? Math.round(conCoords/locales.length*100) : 0;
+  const socios = locales.filter(l => l.socio_horeca==='Sí'||l.socio_horeca===true).length;
+  const personasHC = personas.filter(p => p.tipo_contacto==='HC').length;
+
+  document.getElementById('m-locales').textContent = locales.length.toLocaleString('es-ES');
+  document.getElementById('m-coords').textContent = conCoords.toLocaleString('es-ES');
+  document.getElementById('m-coords-pct').textContent = pct + '% geocodificados';
+  document.getElementById('m-coords-bar').style.width = pct + '%';
+  document.getElementById('m-socios').textContent = socios.toLocaleString('es-ES');
+  document.getElementById('m-personas-hc').textContent = personasHC.toLocaleString('es-ES');
+  document.getElementById('m-negocios').textContent = negocios.length.toLocaleString('es-ES');
+
+  const activos = expedientes.filter(e => e.estado && e.estado !== 'Cerrado');
+  const cerrados = expedientes.filter(e => {
+    if(e.estado !== 'Cerrado') return false;
+    const f = new Date(e.fecha_cierre);
+    return !isNaN(f) && f.getFullYear() === new Date().getFullYear();
+  });
+  const honor = activos.reduce((a,e) => a+(parseFloat(e.honorarios_pactados)||0), 0);
+
+  document.getElementById('m-exp-activos').textContent = activos.length;
+  document.getElementById('m-cerrados').textContent = cerrados.length;
+  document.getElementById('m-honor').textContent = honor ? honor.toLocaleString('es-ES')+'€' : '0€';
+
+  const estados = {'Encargo firmado':'k-encargo','En mercado':'k-mercado','Negociación':'k-negociacion','Cierre':'k-cierre'};
+  Object.entries(estados).forEach(([estado, id]) => {
+    const items = expedientes.filter(e => e.estado === estado);
+    document.getElementById(id).innerHTML = items.length
+      ? items.map(e => `<div class="kanban-card"><div class="kanban-card-name">${e.id_negocio||'Sin nombre'}</div><div class="kanban-card-sub">${e.honorarios_pactados ? Number(e.honorarios_pactados).toLocaleString('es-ES')+'€' : '—'}</div></div>`).join('')
+      : '<div class="kanban-empty">Vacío</div>';
+  });
+
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const pendientes = personas.filter(p => {
+    if(!p.fecha_proxima_accion) return false;
+    const f = new Date(p.fecha_proxima_accion);
+    return !isNaN(f) && f <= hoy;
+  }).sort((a,b) => new Date(a.fecha_proxima_accion)-new Date(b.fecha_proxima_accion));
+
+  document.getElementById('m-accion-list').innerHTML = pendientes.length
+    ? pendientes.slice(0,8).map(p => `<div class="row">
+        <div class="row-left">${avatar(p.nombre,p.apellidos)}<div><div class="person-name">${p.nombre||''} ${p.apellidos||''}</div><div class="person-sub">${p.accion_pendiente||'Sin detalle'}</div></div></div>
+        ${diasBadge(diasDesde(p.fecha_proxima_accion))}</div>`).join('')
+    : '<div class="empty-state">Sin acciones vencidas. Todo al día.</div>';
+
+  const red = personas.filter(p => p.tipo_contacto !== 'HC');
+  const frios = red.filter(p => diasDesde(p.ultima_vez_contactado) > 30);
+  const calientes = red.filter(p => diasDesde(p.ultima_vez_contactado) <= 7);
+
+  document.getElementById('n-total').textContent = red.length;
+  document.getElementById('n-frios').textContent = frios.length;
+  document.getElementById('n-calientes').textContent = calientes.length;
+
+  document.getElementById('n-pending-list').innerHTML = frios.length
+    ? frios.sort((a,b)=>diasDesde(b.ultima_vez_contactado)-diasDesde(a.ultima_vez_contactado))
+        .slice(0,10).map(p=>`<div class="row">
+          <div class="row-left">${avatar(p.nombre,p.apellidos)}<div><div class="person-name">${p.nombre||''} ${p.apellidos||''}</div><div class="person-sub">${p.sector||''} · ${p.como_nos_conocimos||''}</div></div></div>
+          ${diasBadge(diasDesde(p.ultima_vez_contactado))}</div>`).join('')
+    : '<div class="empty-state">Todos tus contactos están al día.</div>';
+
+  renderChart(red);
+
+  const puedo = personas.filter(p => p.yo_puedo_ayudarle && p.yo_puedo_ayudarle.toString().trim());
+  const pueden = personas.filter(p => p.me_puede_ayudar && p.me_puede_ayudar.toString().trim());
+  document.getElementById('a-puedo').textContent = puedo.length;
+  document.getElementById('a-pueden').textContent = pueden.length;
+
+  document.getElementById('a-puedo-list').innerHTML = puedo.length
+    ? puedo.slice(0,10).map(p=>`<div class="row">
+        <div class="row-left">${avatar(p.nombre,p.apellidos)}<div><div class="person-name">${p.nombre||''} ${p.apellidos||''}</div><div class="person-sub">${p.yo_puedo_ayudarle}</div></div></div>
+        <span class="badge badge-green">puedo ayudar</span></div>`).join('')
+    : '<div class="empty-state">Rellena el campo yo_puedo_ayudarle en Google Sheets.</div>';
+
+  document.getElementById('a-pueden-list').innerHTML = pueden.length
+    ? pueden.slice(0,10).map(p=>`<div class="row">
+        <div class="row-left">${avatar(p.nombre,p.apellidos)}<div><div class="person-name">${p.nombre||''} ${p.apellidos||''}</div><div class="person-sub">${p.me_puede_ayudar}</div></div></div>
+        <span class="badge badge-blue">me ayuda</span></div>`).join('')
+    : '<div class="empty-state">Rellena el campo me_puede_ayudar en Google Sheets.</div>';
+}
+
+function renderChart(red) {
+  const canvas = document.getElementById('chartNet');
+  if(!canvas) return;
+  const b = {'0-7d':0,'8-30d':0,'31-60d':0,'+60d':0};
+  red.forEach(p => {
+    const d = diasDesde(p.ultima_vez_contactado);
+    if(d<=7) b['0-7d']++;
+    else if(d<=30) b['8-30d']++;
+    else if(d<=60) b['31-60d']++;
+    else b['+60d']++;
+  });
+  if(chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(canvas, {
+    type:'bar',
+    data:{labels:Object.keys(b),datasets:[{label:'Contactos',data:Object.values(b),backgroundColor:['#1D9E75','#EF9F27','#D85A30','#A32D2D'],borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1},grid:{color:'rgba(0,0,0,0.05)'}},x:{grid:{display:false}}}}
+  });
+}
+
+loadData();
+</script>
+</body>
+</html>
