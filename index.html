@@ -107,9 +107,7 @@ header span{font-size:12px;color:var(--text3)}
   <div id="content">
     <!-- PANEL HC -->
     <div class="panel active" id="panel-hc">
-      <div style="display:flex;align-items:center;margin-bottom:14px">
-        <div class="section-label" style="margin-bottom:0">Observatorio Datebro</div>
-      </div>
+      <div class="section-label">Observatorio Datebro</div>
       <div class="grid-4">
         <div class="metric"><div class="metric-label"><i class="ti ti-building"></i> Locales censo</div><div class="metric-value" id="m-locales">—</div><div class="metric-sub">Zaragoza · API Ayuntamiento</div></div>
         <div class="metric"><div class="metric-label"><i class="ti ti-map-pin"></i> Con coordenadas</div><div class="metric-value" id="m-coords">—</div><div class="metric-sub" id="m-coords-pct"></div><div class="progress-bar"><div class="progress-fill" id="m-coords-bar" style="background:var(--green)"></div></div></div>
@@ -125,20 +123,20 @@ header span{font-size:12px;color:var(--text3)}
       </div>
 
       <div class="grid-4" style="margin-bottom:20px">
-        <div class="metric"><div class="metric-label"><i class="ti ti-file-text"></i> Total activos</div><div class="metric-value" id="m-exp-activos">—</div></div>
-        <div class="metric"><div class="metric-label"><i class="ti ti-currency-euro"></i> Honor. pipeline total</div><div class="metric-value" id="m-honor">—</div></div>
-        <div class="metric"><div class="metric-label"><i class="ti ti-check"></i> Cerrados este ano</div><div class="metric-value" id="m-cerrados">—</div></div>
-        <div class="metric"><div class="metric-label"><i class="ti ti-building-community"></i> Negocios</div><div class="metric-value" id="m-negocios">—</div></div>
+        <div class="metric"><div class="metric-label"><i class="ti ti-file-text"></i> Activos ahora</div><div class="metric-value" id="m-exp-activos">—</div><div class="metric-sub">Sin finalizar ni descartar</div></div>
+        <div class="metric"><div class="metric-label"><i class="ti ti-calendar"></i> Abiertos este mes</div><div class="metric-value" id="m-exp-mes">—</div><div class="metric-sub">Ultimos 30 dias</div></div>
+        <div class="metric"><div class="metric-label"><i class="ti ti-user-check"></i> Contactos HC activos</div><div class="metric-value" id="m-hc-activos">—</div><div class="metric-sub">Con accion pendiente</div></div>
+        <div class="metric"><div class="metric-label"><i class="ti ti-currency-euro"></i> Cobrado este ano</div><div class="metric-value" id="m-cobrado">—</div><div class="metric-sub">Pagos confirmados</div></div>
       </div>
 
       <div class="card">
         <div class="card-title"><i class="ti ti-layout-kanban"></i> Estado expedientes</div>
         <div class="kanban">
-          <div class="kanban-col"><div class="kanban-col-title">Prospecto</div><div id="k-prospecto"><div class="kanban-empty">Vacio</div></div></div>
-          <div class="kanban-col"><div class="kanban-col-title">Encargo firmado</div><div id="k-encargo"><div class="kanban-empty">Vacio</div></div></div>
+          <div class="kanban-col"><div class="kanban-col-title">Interes inicial</div><div id="k-interes"><div class="kanban-empty">Vacio</div></div></div>
+          <div class="kanban-col"><div class="kanban-col-title">En cartera</div><div id="k-cartera"><div class="kanban-empty">Vacio</div></div></div>
           <div class="kanban-col"><div class="kanban-col-title">En mercado</div><div id="k-mercado"><div class="kanban-empty">Vacio</div></div></div>
-          <div class="kanban-col"><div class="kanban-col-title">Negociacion / Cierre</div><div id="k-negociacion"><div class="kanban-empty">Vacio</div></div></div>
-          <div class="kanban-col"><div class="kanban-col-title">Cerrado</div><div id="k-cerrado"><div class="kanban-empty">Vacio</div></div></div>
+          <div class="kanban-col"><div class="kanban-col-title">Negociacion</div><div id="k-negociacion"><div class="kanban-empty">Vacio</div></div></div>
+          <div class="kanban-col"><div class="kanban-col-title">Finalizado</div><div id="k-finalizado"><div class="kanban-empty">Vacio</div></div></div>
         </div>
       </div>
 
@@ -184,11 +182,10 @@ header span{font-size:12px;color:var(--text3)}
 </div>
 
 <script>
-const API_URL = document.getElementById('api-url').value;
-const avColors = [{bg:'#E6F1FB',color:'#185FA5'},{bg:'#E1F5EE',color:'#0F6E56'},{bg:'#FAEEDA',color:'#854F0B'},{bg:'#FAECE7',color:'#993C1D'},{bg:'#EEEDFE',color:'#534AB7'}];
-let chartInstance = null, gData = null;
+const avColors=[{bg:'#E6F1FB',color:'#185FA5'},{bg:'#E1F5EE',color:'#0F6E56'},{bg:'#FAEEDA',color:'#854F0B'},{bg:'#FAECE7',color:'#993C1D'},{bg:'#EEEDFE',color:'#534AB7'}];
+let chartInstance=null,gData=null;
 
-function switchTab(tab) {
+function switchTab(tab){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   const idx=['hc','network','ayuda'].indexOf(tab);
@@ -201,124 +198,160 @@ function colorFor(s){const i=Math.abs((s||'').split('').reduce((a,c)=>a+c.charCo
 function initials(n,a){return((n||'?')[0]+(a||' ')[0]).toUpperCase();}
 function diasDesde(f){if(!f)return 999;const d=new Date(f);return isNaN(d)?999:Math.floor((new Date()-d)/86400000);}
 function diasBadge(d){
-  if(d<=7) return '<span class="dias-badge dias-ok">'+d+'d</span>';
-  if(d<=30) return '<span class="dias-badge dias-warn">'+d+'d</span>';
+  if(d<=7)return '<span class="dias-badge dias-ok">'+d+'d</span>';
+  if(d<=30)return '<span class="dias-badge dias-warn">'+d+'d</span>';
   return '<span class="dias-badge dias-alert">'+d+'d</span>';
 }
-function avatar(n,a){const c=colorFor(n+a);return '<div class="avatar" style="background:'+c.bg+';color:'+c.color+'">'+initials(n,a)+'</div>';}
+function avatar(n,a){const c=colorFor((n||'')+(a||''));return '<div class="avatar" style="background:'+c.bg+';color:'+c.color+'">'+initials(n,a)+'</div>';}
 
-async function loadData() {
-  const url = document.getElementById('api-url').value.trim();
-  if(!url) return;
+async function loadData(){
+  const url=document.getElementById('api-url').value.trim();
+  if(!url)return;
   document.getElementById('loading').style.display='block';
   document.getElementById('content').style.display='none';
   document.getElementById('error-box').style.display='none';
-  try {
-    const res = await fetch(url);
-    if(!res.ok) throw new Error();
-    const data = await res.json();
-    gData = data;
+  try{
+    const res=await fetch(url);
+    if(!res.ok)throw new Error();
+    const data=await res.json();
+    gData=data;
     renderAll(data);
     document.getElementById('loading').style.display='none';
     document.getElementById('content').style.display='block';
     document.getElementById('last-update').textContent='Actualizado: '+new Date().toLocaleTimeString('es-ES');
-  } catch(e) {
+  }catch(e){
     document.getElementById('loading').style.display='none';
     document.getElementById('error-box').style.display='block';
   }
 }
 
-function renderAll(data) {
-  const locales=data.locales||[], personas=data.personas||[], expedientes=data.expedientes||[], negocios=data.negocios||[];
+function esActivo(e){
+  const s=(e.estado||'').toLowerCase();
+  return s&&s!=='finalizado'&&s!=='descartado';
+}
 
+function renderAll(data){
+  const locales=data.locales||[],personas=data.personas||[],expedientes=data.expedientes||[];
+
+  // Datebro
   const conCoords=locales.filter(l=>l.coordenadas&&l.coordenadas.toString().trim()).length;
   const pct=locales.length?Math.round(conCoords/locales.length*100):0;
   const socios=locales.filter(l=>l.socio_horeca==='Si'||l.socio_horeca==='Sí'||l.socio_horeca===true).length;
   const personasHC=personas.filter(p=>p.tipo_contacto==='HC').length;
-
   document.getElementById('m-locales').textContent=locales.length.toLocaleString('es-ES');
   document.getElementById('m-coords').textContent=conCoords.toLocaleString('es-ES');
   document.getElementById('m-coords-pct').textContent=pct+'% geocodificados';
   document.getElementById('m-coords-bar').style.width=pct+'%';
   document.getElementById('m-socios').textContent=socios.toLocaleString('es-ES');
   document.getElementById('m-personas-hc').textContent=personasHC.toLocaleString('es-ES');
-  document.getElementById('m-negocios').textContent=negocios.length.toLocaleString('es-ES');
 
-  const activos=expedientes.filter(e=>e.estado&&e.estado!=='Cerrado'&&e.estado!=='Descartado');
-  const cerrados=expedientes.filter(e=>{
-    if(e.estado!=='Cerrado') return false;
-    const f=new Date(e.fecha_cierre);
-    return !isNaN(f)&&f.getFullYear()===new Date().getFullYear();
-  });
-  const honor=activos.reduce((a,e)=>a+(parseFloat(e.honorarios_pactados)||0),0);
-
+  // Pipeline por tipo
+  const activos=expedientes.filter(esActivo);
   [['traspaso','traspaso'],['revision','revision'],['otros','otros']].forEach(([id,key])=>{
     const items=activos.filter(e=>{
       const t=(e.tipo_expediente||'').toLowerCase();
-      if(key==='traspaso') return t.includes('traspaso');
-      if(key==='revision') return t.includes('revision')||t.includes('revisión');
-      return !t.includes('traspaso')&&!t.includes('revision')&&!t.includes('revisión');
+      if(key==='traspaso')return t.includes('traspaso');
+      if(key==='revision')return t.includes('revision')||t.includes('revisión');
+      return!t.includes('traspaso')&&!t.includes('revision')&&!t.includes('revisión');
     });
     const h=items.reduce((a,e)=>a+(parseFloat(e.honorarios_pactados)||0),0);
     document.getElementById('t-'+id+'-n').textContent=items.length+' activos';
     document.getElementById('t-'+id+'-h').textContent=(h?h.toLocaleString('es-ES')+'€':'0€')+' pipeline';
   });
 
+  // Metricas fila 2
   document.getElementById('m-exp-activos').textContent=activos.length;
-  document.getElementById('m-cerrados').textContent=cerrados.length;
-  document.getElementById('m-honor').textContent=honor?honor.toLocaleString('es-ES')+'€':'0€';
 
-  const estadoMap={'Prospecto':'k-prospecto','Encargo firmado':'k-encargo','En mercado':'k-mercado','Negociacion':'k-negociacion','Negociación':'k-negociacion','Cierre':'k-negociacion','Cerrado':'k-cerrado'};
-  const kd={'k-prospecto':[],'k-encargo':[],'k-mercado':[],'k-negociacion':[],'k-cerrado':[]};
-  expedientes.forEach(e=>{const k=estadoMap[e.estado];if(k)kd[k].push(e);});
+  const hace30=new Date();hace30.setDate(hace30.getDate()-30);
+  const expMes=expedientes.filter(e=>{
+    if(!e.fecha_encargo)return false;
+    const f=new Date(e.fecha_encargo);
+    return!isNaN(f)&&f>=hace30;
+  });
+  document.getElementById('m-exp-mes').textContent=expMes.length;
+
+  const hoy=new Date();hoy.setHours(0,0,0,0);
+  const hcActivos=personas.filter(p=>{
+    if(p.tipo_contacto!=='HC')return false;
+    if(!p.fecha_proxima_accion)return false;
+    const f=new Date(p.fecha_proxima_accion);
+    return!isNaN(f)&&f>=hoy;
+  });
+  document.getElementById('m-hc-activos').textContent=hcActivos.length;
+
+  const anyo=new Date().getFullYear();
+  let cobrado=0;
+  expedientes.forEach(e=>{
+    [1,2,3].forEach(n=>{
+      const pagado=e['cobro_'+n+'_pagado'];
+      const fecha=e['cobro_'+n+'_fecha'];
+      const importe=parseFloat(e['cobro_'+n+'_importe'])||0;
+      const ok=pagado==='Si'||pagado==='Sí'||pagado===true||pagado==='TRUE';
+      if(ok&&importe){
+        const f=new Date(fecha);
+        if(isNaN(f)||f.getFullYear()===anyo)cobrado+=importe;
+      }
+    });
+  });
+  document.getElementById('m-cobrado').textContent=cobrado?cobrado.toLocaleString('es-ES')+'€':'0€';
+
+  // Kanban — estados nuevos
+  const estadoMap={
+    'interes inicial':'k-interes','interés inicial':'k-interes',
+    'en cartera':'k-cartera',
+    'en mercado':'k-mercado',
+    'negociacion':'k-negociacion','negociación':'k-negociacion',
+    'finalizado':'k-finalizado'
+  };
+  const kd={'k-interes':[],'k-cartera':[],'k-mercado':[],'k-negociacion':[],'k-finalizado':[]};
+  expedientes.forEach(e=>{
+    const k=estadoMap[(e.estado||'').toLowerCase()];
+    if(k)kd[k].push(e);
+  });
   Object.entries(kd).forEach(([id,items])=>{
     document.getElementById(id).innerHTML=items.length
-      ?items.slice(0,4).map(e=>'<div class="kanban-card"><div class="kanban-card-name">'+(e.nombre_cedente||e.id_negocio||'Sin nombre')+'</div><div class="kanban-card-sub">'+(e.tipo_expediente||'')+(e.honorarios_pactados?' · '+Number(e.honorarios_pactados).toLocaleString('es-ES')+'€':'')+'</div></div>').join('')
+      ?items.slice(0,4).map(e=>'<div class="kanban-card"><div class="kanban-card-name">'+(e.nombre_cedente||'Sin nombre')+'</div><div class="kanban-card-sub">'+(e.tipo_expediente||'')+(e.honorarios_pactados?' · '+Number(e.honorarios_pactados).toLocaleString('es-ES')+'€':'')+'</div></div>').join('')
       :'<div class="kanban-empty">Vacio</div>';
   });
 
-  const hoy=new Date();hoy.setHours(0,0,0,0);
+  // Acciones vencidas
   const pendientes=personas.filter(p=>{
-    if(!p.fecha_proxima_accion) return false;
+    if(!p.fecha_proxima_accion)return false;
     const f=new Date(p.fecha_proxima_accion);
-    return !isNaN(f)&&f<=hoy;
+    return!isNaN(f)&&f<=hoy;
   }).sort((a,b)=>new Date(a.fecha_proxima_accion)-new Date(b.fecha_proxima_accion));
-
   document.getElementById('m-accion-list').innerHTML=pendientes.length
     ?pendientes.slice(0,8).map(p=>'<div class="row"><div class="row-left">'+avatar(p.nombre,p.apellidos)+'<div><div class="person-name">'+(p.nombre||'')+' '+(p.apellidos||'')+'</div><div class="person-sub">'+(p.accion_pendiente||'Sin detalle')+'</div></div></div>'+diasBadge(diasDesde(p.fecha_proxima_accion))+'</div>').join('')
     :'<div class="empty-state">Sin acciones vencidas. Todo al dia.</div>';
 
+  // Networking
   const red=personas.filter(p=>p.tipo_contacto!=='HC');
   const frios=red.filter(p=>diasDesde(p.ultima_vez_contactado)>30);
   const calientes=red.filter(p=>diasDesde(p.ultima_vez_contactado)<=7);
-
   document.getElementById('n-total').textContent=red.length;
   document.getElementById('n-frios').textContent=frios.length;
   document.getElementById('n-calientes').textContent=calientes.length;
-
   document.getElementById('n-pending-list').innerHTML=frios.length
     ?frios.sort((a,b)=>diasDesde(b.ultima_vez_contactado)-diasDesde(a.ultima_vez_contactado)).slice(0,10).map(p=>'<div class="row"><div class="row-left">'+avatar(p.nombre,p.apellidos)+'<div><div class="person-name">'+(p.nombre||'')+' '+(p.apellidos||'')+'</div><div class="person-sub">'+(p.sector||'')+' · '+(p.como_nos_conocimos||'')+'</div></div></div>'+diasBadge(diasDesde(p.ultima_vez_contactado))+'</div>').join('')
     :'<div class="empty-state">Todos los contactos al dia.</div>';
-
   renderChart(red);
 
+  // Ayuda
   const puedo=personas.filter(p=>p.yo_puedo_ayudarle&&p.yo_puedo_ayudarle.toString().trim());
   const pueden=personas.filter(p=>p.me_puede_ayudar&&p.me_puede_ayudar.toString().trim());
   document.getElementById('a-puedo').textContent=puedo.length;
   document.getElementById('a-pueden').textContent=pueden.length;
-
   document.getElementById('a-puedo-list').innerHTML=puedo.length
     ?puedo.slice(0,10).map(p=>'<div class="row"><div class="row-left">'+avatar(p.nombre,p.apellidos)+'<div><div class="person-name">'+(p.nombre||'')+' '+(p.apellidos||'')+'</div><div class="person-sub">'+p.yo_puedo_ayudarle+'</div></div></div><span class="badge badge-green">puedo ayudar</span></div>').join('')
     :'<div class="empty-state">Rellena yo_puedo_ayudarle en Google Sheets.</div>';
-
   document.getElementById('a-pueden-list').innerHTML=pueden.length
     ?pueden.slice(0,10).map(p=>'<div class="row"><div class="row-left">'+avatar(p.nombre,p.apellidos)+'<div><div class="person-name">'+(p.nombre||'')+' '+(p.apellidos||'')+'</div><div class="person-sub">'+p.me_puede_ayudar+'</div></div></div><span class="badge badge-blue">me ayuda</span></div>').join('')
     :'<div class="empty-state">Rellena me_puede_ayudar en Google Sheets.</div>';
 }
 
-function renderChart(red) {
+function renderChart(red){
   const canvas=document.getElementById('chartNet');
-  if(!canvas) return;
+  if(!canvas)return;
   const b={'0-7d':0,'8-30d':0,'31-60d':0,'+60d':0};
   red.forEach(p=>{
     const d=diasDesde(p.ultima_vez_contactado);
