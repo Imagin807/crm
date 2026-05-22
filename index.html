@@ -297,7 +297,7 @@ function renderAll(data){
 
   // Kanban — estados nuevos
   const estadoMap={
-    'interes inicial':'k-interes','interés inicial':'k-interes',
+    'interes':'k-interes','interés':'k-interes','interes inicial':'k-interes',
     'en cartera':'k-cartera',
     'en mercado':'k-mercado',
     'negociacion':'k-negociacion','negociación':'k-negociacion',
@@ -337,15 +337,15 @@ function renderAll(data){
   renderChart(red);
 
   // Ayuda
-  const puedo=personas.filter(p=>p.yo_puedo_ayudarle&&p.yo_puedo_ayudarle.toString().trim());
-  const pueden=personas.filter(p=>p.me_puede_ayudar&&p.me_puede_ayudar.toString().trim());
+  const puedo=personas.filter(p=>p['Ayudarle']&&p['Ayudarle'].toString().trim());
+  const pueden=personas.filter(p=>p['Ayudarme']&&p['Ayudarme'].toString().trim());
   document.getElementById('a-puedo').textContent=puedo.length;
   document.getElementById('a-pueden').textContent=pueden.length;
   document.getElementById('a-puedo-list').innerHTML=puedo.length
-    ?puedo.slice(0,10).map(p=>'<div class="row"><div class="row-left">'+avatar(p.nombre,p.apellidos)+'<div><div class="person-name">'+(p.nombre||'')+' '+(p.apellidos||'')+'</div><div class="person-sub">'+p.yo_puedo_ayudarle+'</div></div></div><span class="badge badge-green">puedo ayudar</span></div>').join('')
+    ?puedo.slice(0,10).map(p=>'<div class="row"><div class="row-left">'+avatar(p.nombre,p.apellidos)+'<div><div class="person-name">'+(p.nombre||'')+' '+(p.apellidos||'')+'</div><div class="person-sub">'+p['Ayudarle']+'</div></div></div><span class="badge badge-green">puedo ayudar</span></div>').join('')
     :'<div class="empty-state">Rellena yo_puedo_ayudarle en Google Sheets.</div>';
   document.getElementById('a-pueden-list').innerHTML=pueden.length
-    ?pueden.slice(0,10).map(p=>'<div class="row"><div class="row-left">'+avatar(p.nombre,p.apellidos)+'<div><div class="person-name">'+(p.nombre||'')+' '+(p.apellidos||'')+'</div><div class="person-sub">'+p.me_puede_ayudar+'</div></div></div><span class="badge badge-blue">me ayuda</span></div>').join('')
+    ?pueden.slice(0,10).map(p=>'<div class="row"><div class="row-left">'+avatar(p.nombre,p.apellidos)+'<div><div class="person-name">'+(p.nombre||'')+' '+(p.apellidos||'')+'</div><div class="person-sub">'+p['Ayudarme']+'</div></div></div><span class="badge badge-blue">me ayuda</span></div>').join('')
     :'<div class="empty-state">Rellena me_puede_ayudar en Google Sheets.</div>';
 }
 
